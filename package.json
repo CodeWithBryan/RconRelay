@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Relays RCON Messages to all listen clients",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,6 +25,7 @@
   "homepage": "https://github.com/CodeWithBryan/RconRelay#readme",
   "dependencies": {
     "dotenv": "^16.3.1",
+    "webrconjs": "^1.0.0",
     "ws": "^8.13.0"
   }
 }
