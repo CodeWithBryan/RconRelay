@@ -1,0 +1,29 @@
+{
+  "name": "rconrelay",
+  "version": "1.0.0",
+  "description": "Relays RCON Messages to all listen clients",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeWithBryan/RconRelay.git"
+  },
+  "keywords": [
+    "RCON",
+    "Relay",
+    "Web",
+    "RCON"
+  ],
+  "author": "CodeWithBryan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CodeWithBryan/RconRelay/issues"
+  },
+  "homepage": "https://github.com/CodeWithBryan/RconRelay#readme",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "ws": "^8.13.0"
+  }
+}
