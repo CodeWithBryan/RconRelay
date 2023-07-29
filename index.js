@@ -1,67 +1,36 @@
-import { WebSocketServer } from 'ws';
-import { config } from 'dotenv';
-import WebRcon from 'webrconjs';
+import { createServer } from 'http';
+import * as fs from 'fs';
+import WebSocket, { WebSocketServer } from 'ws';
+import RconServer from './rcon-server.js';
 
-config();
+const config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
-let connected = false;
-const rcon = new WebRcon(process.env.RCON_IP, process.env.RCON_PORT);
+const server = createServer();
+const wss = new WebSocketServer({ noServer: true });
 
-const wss = new WebSocketServer({
-  port: process.env.RELAY_PORT ?? 3000,
-  perMessageDeflate: {
-    zlibDeflateOptions: {
-      chunkSize: 1024,
-      memLevel: 7,
-      level: 3
-    },
-    zlibInflateOptions: {
-      chunkSize: 10 * 1024
-    },
-    clientNoContextTakeover: true,
-    serverNoContextTakeover: true,
-    serverMaxWindowBits: 10,
-    concurrencyLimit: 10,
-    threshold: 1024
+server.on('upgrade', function upgrade(request, socket, head) {
+  if (!request.url.includes(config.apiToken)) {
+    socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+    socket.destroy();
+    return;
   }
+
+  wss.handleUpgrade(request, socket, head, function done(ws) {
+    wss.emit('connection', ws, request);
+  });
+
 });
 
 const broadcast = (msg) => wss.clients.forEach((client) => {
-  client.send(JSON.stringify(msg));
+  if (client.readyState === WebSocket.OPEN) {
+    client.send(JSON.stringify(msg));
+  }
 });
 
-const reconnect = () => {
-  rcon.connect(process.env.RCON_PASS);
-  setTimeout(() => {
-    if (!connected) {
-      reconnect();
-    }
-  }, process.env.RECONNECT_TIMEOUT ?? 2500);
-};
-
-const infoLoop = () => {
-  if (connected && process.env.ENABLE_INFO_LOOP === 'true') {
-    rcon.run('serverinfo')
-    
-    setTimeout(() => {
-      infoLoop();
-    }, process.env.INFO_LOOP_TIME ?? 1000);
-  }
+for (const server of config.servers) {
+  new RconServer(config, server, broadcast);
 }
 
-rcon.on('connect', () => {
-  console.log('Connected!');
-  connected = true;
-  infoLoop();
-});
+console.log('Starting Server');
 
-rcon.on('disconnect', () => {
-  console.log('Disconnected... attempting to reconnect');
-  connected = false;
-  reconnect();
-});
-
-rcon.on('message', (msg) => broadcast(msg));
-rcon.on('error', (err) => broadcast(err));
-
-reconnect();
+server.listen(config.relayPort);
